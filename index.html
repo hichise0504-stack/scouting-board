@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scouting Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-void:#0A1428;
+    --bg-panel:#0F1E33;
+    --bg-panel-raised:#16283F;
+    --bg-input:#0A1622;
+    --parchment:#F0E6D2;
+    --parchment-dim:#B9AE93;
+    --gold:#C8AA6E;
+    --gold-bright:#F0B232;
+    --cyan:#0AC8B9;
+    --muted:#5C7189;
+    --danger:#E84057;
+    --border:#1E3350;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(200,170,110,0.06), transparent),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(10,200,185,0.05), transparent),
+      var(--bg-void);
+    color:var(--parchment);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:32px 24px 80px;
+  }
+  .wrap{max-width:1280px;margin:0 auto;}
+
+  /* header */
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.28em;
+    color:var(--cyan);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:44px;
+    letter-spacing:0.03em;
+    margin:0 0 4px;
+    color:var(--parchment);
+    line-height:1;
+  }
+  .sub{
+    color:var(--parchment-dim);
+    font-size:13px;
+    margin:0 0 28px;
+  }
+
+  .toolbar{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .search-box{
+    position:relative;
+    flex:1;
+    min-width:220px;
+  }
+  .search-box input{
+    width:100%;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:10px 14px 10px 34px;
+    color:var(--parchment);
+    font-size:13px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .search-box input:focus{border-color:var(--gold);}
+  .search-box svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5;}
+  .count-pill{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .count-pill b{color:var(--gold);font-weight:600;}
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+    border-radius:var(--radius);
+    padding:10px 18px;
+    cursor:pointer;
+    transition:filter .15s, transform .1s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+    color:#1a1204;
+  }
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--parchment-dim);
+  }
+  .btn-ghost:hover{border-color:var(--muted);color:var(--parchment);}
+
+  /* grid */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+    gap:18px;
+  }
+
+  .card{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    position:relative;
+  }
+  .card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    opacity:.6;
+  }
+  .card-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 16px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  .team-name-input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px;
+    letter-spacing:0.02em;
+    color:var(--parchment);
+    padding:2px 0;
+    border-bottom:1px solid transparent;
+  }
+  .team-name-input:focus{border-bottom:1px solid var(--gold);}
+  .team-name-input::placeholder{color:var(--muted);}
+  .icon-btn{
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    color:var(--muted);
+    padding:4px;
+    display:flex;
+    border-radius:4px;
+    transition:color .15s, background .15s;
+  }
+  .icon-btn:hover{color:var(--danger);background:rgba(232,64,87,0.1);}
+
+  .roster{padding:6px 10px;}
+  .player-row{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:8px 6px;
+    border-radius:6px;
+    transition:background .15s;
+  }
+  .player-row:hover{background:var(--bg-panel-raised);}
+  .player-row-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .row-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--muted);
+    width:14px;
+    text-align:center;
+    flex-shrink:0;
+  }
+  .champ-strip{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    padding-left:24px;
+  }
+  .champ-badge{
+    width:26px;height:26px;
+    border-radius:5px;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    flex-shrink:0;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    position:relative;
+    transition:border-color .15s;
+  }
+  .champ-badge:hover{border-color:var(--gold);}
+  .champ-badge img{width:100%;height:100%;object-fit:cover;}
+  .champ-badge .plus{color:var(--muted);font-size:13px;font-weight:300;}
+
+  .player-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+  .player-name-input{
+    background:transparent;border:none;outline:none;
+    color:var(--parchment);font-size:13.5px;font-weight:500;
+    font-family:'Inter',sans-serif;
+    padding:1px 0;
+    border-bottom:1px solid transparent;
+  }
+  .player-name-input:focus{border-bottom:1px solid var(--muted);}
+  .player-name-input::placeholder{color:var(--muted);font-weight:400;}
+  .sub-row{display:flex;align-items:center;gap:6px;}
+  .opgg-input{
+    flex:1;min-width:0;
+    background:transparent;border:none;outline:none;
+    color:var(--cyan);font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    padding:1px 0;
+    border-bottom:1px solid transparent;
+  }
+  .opgg-input:focus{border-bottom:1px solid var(--muted);}
+  .opgg-input::placeholder{color:var(--muted);font-family:'Inter',sans-serif;font-size:11px;}
+  .opgg-link{
+    flex-shrink:0;
+    color:var(--muted);
+    display:flex;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s;
+  }
+  .sub-row.has-url .opgg-link{opacity:1;pointer-events:auto;}
+  .sub-row.has-url .opgg-link:hover{color:var(--cyan);}
+  .champ-name{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:2px;
+    width:26px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .champ-col{display:flex;flex-direction:column;align-items:center;}
+
+  /* --- 並び替えボタン --- */
+  .reorder-btns{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    flex-shrink:0;
+  }
+  .reorder-btn{
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    color:var(--muted);
+    padding:0;
+    width:14px;height:11px;
+    display:flex;align-items:center;justify-content:center;
+    transition:color .15s;
+  }
+  .reorder-btn:hover{color:var(--gold);}
+  .reorder-btn:disabled{opacity:.25;cursor:default;}
+  .reorder-btn:disabled:hover{color:var(--muted);}
+
+  /* --- メモ欄 --- */
+  .note-input{
+    width:100%;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:6px 8px;
+    color:var(--parchment-dim);
+    font-size:11.5px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    resize:vertical;
+    min-height:28px;
+    line-height:1.4;
+    transition:border-color .15s;
+  }
+  .note-input:focus{border-color:var(--gold);color:var(--parchment);}
+  .note-input::placeholder{color:var(--muted);}
+  .player-note{margin-top:4px;padding-left:24px;}
+  .team-note-block{
+    padding:10px 16px 4px;
+    border-top:1px solid var(--border);
+  }
+  .note-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin:0 0 5px;
+  }
+
+  /* --- B/P欄 --- */
+  .bp-block{
+    padding:12px 16px 4px;
+    border-top:1px solid var(--border);
+  }
+  .bp-set{
+    padding:8px 0;
+  }
+  .bp-set + .bp-set{
+    border-top:1px dashed var(--border);
+  }
+  .bp-set-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    letter-spacing:.12em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin:0 0 7px;
+    opacity:.8;
+  }
+  .bp-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .bp-row:last-child{margin-bottom:0;}
+  .bp-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.06em;
+    width:34px;
+    flex-shrink:0;
+    text-transform:uppercase;
+  }
+  .bp-tag.ban{color:var(--danger);}
+  .bp-tag.pick{color:var(--cyan);}
+  .bp-slots{display:flex;gap:5px;flex-wrap:wrap;}
+  .bp-badge{
+    width:24px;height:24px;
+    border-radius:5px;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    flex-shrink:0;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    position:relative;
+    transition:border-color .15s;
+  }
+  .bp-badge.ban{border-color:rgba(232,64,87,0.3);}
+  .bp-badge.ban:hover{border-color:var(--danger);}
+  .bp-badge.pick:hover{border-color:var(--cyan);}
+  .bp-badge img{width:100%;height:100%;object-fit:cover;}
+  .bp-badge .plus{color:var(--muted);font-size:12px;font-weight:300;}
+  .player-bp{margin-top:5px;padding-left:24px;}
+  .bp-history-input{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px dashed var(--border);
+    outline:none;
+    color:var(--parchment-dim);
+    font-size:10.5px;
+    font-family:'JetBrains Mono',monospace;
+    padding:2px 0;
+  }
+  .bp-history-input:focus{border-bottom-color:var(--gold);}
+  .bp-history-input::placeholder{color:var(--muted);font-family:'Inter',sans-serif;}
+
+  .card-foot{
+    padding:10px 16px 14px;
+    display:flex;
+    justify-content:flex-end;
+  }
+  .delete-team{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:.08em;
+    color:var(--muted);
+    background:transparent;border:none;cursor:pointer;
+    text-transform:uppercase;
+    transition:color .15s;
+  }
+  .delete-team:hover{color:var(--danger);}
+
+  /* empty state */
+  .empty{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--muted);
+  }
+  .empty svg{opacity:.35;margin-bottom:16px;}
+  .empty p{font-size:14px;margin:0 0 20px;}
+
+  /* loading */
+  .loading-screen{
+    min-height:60vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.05em;
+  }
+  .spinner{
+    width:28px;height:28px;
+    border-radius:50%;
+    border:2px solid var(--border);
+    border-top-color:var(--gold);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* modal */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(5,10,20,0.75);
+    backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;
+    z-index:100;
+    padding:20px;
+    opacity:0;
+    animation:fadeIn .12s forwards;
+  }
+  @keyframes fadeIn{to{opacity:1;}}
+  .modal{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    width:100%;
+    max-width:480px;
+    max-height:78vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .modal-head{
+    padding:16px 18px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .modal-head input{
+    flex:1;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:9px 12px;
+    color:var(--parchment);
+    font-size:13px;
+    outline:none;
+    font-family:'Inter',sans-serif;
+  }
+  .modal-head input:focus{border-color:var(--gold);}
+  .modal-close{
+    background:transparent;border:none;color:var(--muted);
+    cursor:pointer;font-size:20px;line-height:1;padding:4px;
+  }
+  .modal-close:hover{color:var(--parchment);}
+  .champ-grid{
+    padding:14px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(44px,1fr));
+    gap:8px;
+    overflow-y:auto;
+  }
+  .champ-option{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    cursor:pointer;
+    padding:6px 2px;
+    border-radius:6px;
+    border:1px solid transparent;
+    transition:border-color .15s, background .15s;
+  }
+  .champ-option:hover{background:var(--bg-panel-raised);border-color:var(--border);}
+  .champ-option img{
+    width:32px;height:32px;border-radius:5px;
+    border:1px solid var(--border);
+    object-fit:cover;
+  }
+  .champ-option span{
+    font-size:9px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--parchment-dim);
+    text-align:center;
+    line-height:1.2;
+    max-width:44px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .clear-option{
+    color:var(--danger);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    padding:12px 18px;
+    border-top:1px solid var(--border);
+    background:transparent;border:none;cursor:pointer;
+    text-align:left;
+  }
+  .clear-option:hover{background:rgba(232,64,87,0.08);}
+
+  .toast{
+    position:fixed;
+    bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--bg-panel-raised);
+    border:1px solid var(--border);
+    color:var(--parchment-dim);
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    padding:9px 16px;
+    border-radius:6px;
+    opacity:0;
+    transition:opacity .2s, transform .2s;
+    pointer-events:none;
+    z-index:200;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:520px){
+    body{padding:20px 14px 60px;}
+    h1{font-size:34px;}
+    .grid{grid-template-columns:1fr;}
+  }
+</style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBnPCJA_TzYeZmLyeEArk44S27XJuDpgAA",
+    authDomain: "scouting-board-b5561.firebaseapp.com",
+    databaseURL: "https://scouting-board-b5561-default-rtdb.firebaseio.com",
+    projectId: "scouting-board-b5561",
+    storageBucket: "scouting-board-b5561.firebasestorage.app",
+    messagingSenderId: "499810579759",
+    appId: "1:499810579759:web:c71a3fdc5d722702169dda"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const teamsRef = ref(db, 'teams');
+
+  // グローバルに公開して、下の通常scriptから使えるようにする
+  window.__firebaseTeamsRef = teamsRef;
+  window.__firebaseOnValue = onValue;
+  window.__firebaseSet = set;
+</script>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <div>LOADING CHAMPION DATA...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const DEFAULT_VERSION_FALLBACK = "16.13.1";
+  let ddVersion = null;
+  let champById = {};      // id -> {id, name, image}
+  let champList = [];      // sorted array for search
+  let teams = [];
+  let saveTimer = null;
+  let activePickerTarget = null; // {teamId, playerIdx}
+  let activeBpTarget = null;     // {teamId, kind: 'ban'|'pick', slot}
+
+  const app = document.getElementById('app');
+  const toastEl = document.getElementById('toast');
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+  }
+
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+
+  function makeEmptyPlayer(){
+    return {
+      name:'', opgg:'',
+      champions: [null,null,null,null,null,null,null,null,null,null],
+      note:'',                 // 選手メモ
+      bpHistory:''             // 選手のBan/Pick履歴（自由記述）
+    };
+  }
+  function makeEmptyBpSet(){
+    return { bans:[null,null,null,null,null], picks:[null,null,null,null,null] };
+  }
+  function makeEmptyTeam(name){
+    return {
+      id: uid(), name: name || '',
+      players: [0,1,2,3,4].map(makeEmptyPlayer),
+      note:'',                                   // チームメモ
+      bpSets: [makeEmptyBpSet(), makeEmptyBpSet(), makeEmptyBpSet()]  // Ban/Pick 3セット（試合ごと）
+    };
+  }
+
+  // ---------- storage (Firebase Realtime Database) ----------
+  function loadTeamsOnce(){
+    return new Promise((resolve)=>{
+      if(!window.__firebaseTeamsRef){ resolve([]); return; }
+      window.__firebaseOnValue(window.__firebaseTeamsRef, (snapshot)=>{
+        const val = snapshot.val();
+        if(Array.isArray(val)){
+          resolve(val.map(migrateTeam));
+        } else {
+          resolve([]);
+        }
+      }, { onlyOnce: true });
+    });
+  }
+
+  // リアルタイム同期: 他の人がFirebase上のデータを変更すると即座に反映される
+  function subscribeRealtime(){
+    if(!window.__firebaseTeamsRef) return;
+    window.__firebaseOnValue(window.__firebaseTeamsRef, (snapshot)=>{
+      const active = document.activeElement;
+      const isTyping = active && (active.tagName === 'INPUT');
+      const modalOpen = !!document.getElementById('pickerOverlay');
+      if(isTyping || modalOpen) return; // 自分が入力中は上書きしない
+
+      const val = snapshot.val();
+      const incoming = Array.isArray(val) ? val.map(migrateTeam) : [];
+      const before = JSON.stringify(teams);
+      const after = JSON.stringify(incoming);
+      if(before !== after){
+        teams = incoming;
+        render();
+      }
+    });
+  }
+
+  // Older saved data stored a single championId/championName per player.
+  // Convert that into the new champions[10] array shape.
+  // 既存データに note / bpHistory / bans / picks が無い場合はデフォルト値で補完する。
+  function migrateTeam(team){
+    team.players = (team.players || []).map(p=>{
+      if(!Array.isArray(p.champions)){
+        const champions = [null,null,null,null,null,null,null,null,null,null];
+        if(p.championId){ champions[0] = { id: p.championId, name: p.championName || p.championId }; }
+        delete p.championId;
+        delete p.championName;
+        p.champions = champions;
+      }
+      while(p.champions.length < 10) p.champions.push(null);
+      if(typeof p.note !== 'string') p.note = '';
+      if(typeof p.bpHistory !== 'string') p.bpHistory = '';
+      return p;
+    });
+    if(typeof team.note !== 'string') team.note = '';
+
+    // B/Pを3セット構造(bpSets)へ移行。旧形式(bans/picks単一)は1セット目に入れる。
+    if(!Array.isArray(team.bpSets)){
+      const firstSet = makeEmptyBpSet();
+      if(Array.isArray(team.bans)){
+        for(let i=0;i<5;i++) firstSet.bans[i] = team.bans[i] || null;
+      }
+      if(Array.isArray(team.picks)){
+        for(let i=0;i<5;i++) firstSet.picks[i] = team.picks[i] || null;
+      }
+      team.bpSets = [firstSet, makeEmptyBpSet(), makeEmptyBpSet()];
+    }
+    delete team.bans;
+    delete team.picks;
+    // 各セットの形を保証（3セット、各bans/picks 5枠）
+    while(team.bpSets.length < 3) team.bpSets.push(makeEmptyBpSet());
+    team.bpSets = team.bpSets.map(set=>{
+      if(!set || typeof set !== 'object') set = makeEmptyBpSet();
+      if(!Array.isArray(set.bans))  set.bans  = [null,null,null,null,null];
+      if(!Array.isArray(set.picks)) set.picks = [null,null,null,null,null];
+      while(set.bans.length  < 5) set.bans.push(null);
+      while(set.picks.length < 5) set.picks.push(null);
+      return set;
+    });
+    return team;
+  }
+
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async ()=>{
+      try{
+        if(!window.__firebaseTeamsRef){ showToast('Firebase未接続のため保存できません'); return; }
+        await window.__firebaseSet(window.__firebaseTeamsRef, teams);
+      }catch(e){
+        showToast('保存エラー: ' + (e.message || e));
+      }
+    }, 450);
+  }
+
+  // ---------- champion data ----------
+  // Data Dragon(Riot公式の静的アセット)の一覧データを、あらかじめアプリ内に埋め込んでおく方式。
+  // 実行環境からは外部JSONへのfetchがブロックされることがあるため、
+  // 一覧データ自体は事前に取得したものを同梱し、画像だけ<img>タグ経由でCDNから読み込む。
+  // Base64-encoded champion icon thumbnails (embedded so the app works without external network access)
+  const CHAMP_ICONS = {};
+
+  const CHAMPION_LIST = [
+    ["Aatrox","エイトロックス"],["Ahri","アーリ"],["Akali","アカリ"],["Akshan","アクシャン"],
+    ["Alistar","アリスター"],["Ambessa","アンベッサ"],["Amumu","アムム"],["Anivia","アニビア"],
+    ["Annie","アニー"],["Aphelios","アフェリオス"],["Ashe","アッシュ"],["AurelionSol","オレリオン・ソル"],
+    ["Aurora","オーロラ"],["Azir","アジール"],["Bard","バード"],["Belveth","ベル＝ヴェス"],
+    ["Blitzcrank","ブリッツクランク"],["Brand","ブランド"],["Braum","ブラウム"],["Briar","ブライアー"],
+    ["Caitlyn","ケイトリン"],["Camille","カミール"],["Cassiopeia","カシオペア"],["Chogath","チョ＝ガス"],
+    ["Corki","コーキ"],["Darius","ダリウス"],["Diana","ダイアナ"],["DrMundo","ドクター・ムンド"],
+    ["Draven","ドレイヴン"],["Ekko","エコー"],["Elise","エリス"],["Evelynn","イブリン"],
+    ["Ezreal","エズリアル"],["Fiddlesticks","フィドルスティックス"],["Fiora","フィオラ"],["Fizz","フィズ"],
+    ["Galio","ガリオ"],["Gangplank","ガングプランク"],["Garen","ガレン"],["Gnar","ナー"],
+    ["Gragas","グラガス"],["Graves","グレイブス"],["Gwen","グウェン"],["Hecarim","ヘカリム"],
+    ["Heimerdinger","ハイマーディンガー"],["Hwei","フェイ"],["Illaoi","イラオイ"],["Irelia","イレリア"],
+    ["Ivern","アイバーン"],["Janna","ジャンナ"],["JarvanIV","ジャーヴァンⅣ"],["Jax","ジャックス"],
+    ["Jayce","ジェイス"],["Jhin","ジン"],["Jinx","ジンクス"],["KSante","カ・サンテ"],
+    ["Kaisa","カイ＝サ"],["Kalista","カリスタ"],["Karma","カルマ"],["Karthus","カーサス"],
+    ["Kassadin","カサディン"],["Katarina","カタリナ"],["Kayle","ケイル"],["Kayn","ケイン"],
+    ["Kennen","ケネン"],["Khazix","カ＝ジックス"],["Kindred","キンドレッド"],["Kled","クレッド"],
+    ["KogMaw","コグ＝マウ"],["Leblanc","ルブラン"],["LeeSin","リー・シン"],["Leona","レオナ"],
+    ["Lillia","リリア"],["Lissandra","リサンドラ"],["Locke","ロック"],["Lucian","ルシアン"],
+    ["Lulu","ルル"],["Lux","ラックス"],["Malphite","マルファイト"],["Malzahar","マルザハール"],
+    ["Maokai","マオカイ"],["MasterYi","マスター・イー"],["Mel","メル"],["Milio","ミリオ"],
+    ["MissFortune","ミス・フォーチュン"],["MonkeyKing","ウーコン"],["Mordekaiser","モルデカイザー"],["Morgana","モルガナ"],
+    ["Naafiri","ナフィーリ"],["Nami","ナミ"],["Nasus","ナサス"],["Nautilus","ノーチラス"],
+    ["Neeko","ニーコ"],["Nidalee","ニダリー"],["Nilah","ニーラ"],["Nocturne","ノクターン"],
+    ["Nunu","ヌヌ＆ウィルンプ"],["Olaf","オラフ"],["Orianna","オリアナ"],["Ornn","オーン"],
+    ["Pantheon","パンテオン"],["Poppy","ポッピー"],["Pyke","パイク"],["Qiyana","キヤナ"],
+    ["Quinn","クイン"],["Rakan","ラカン"],["Rammus","ラムス"],["RekSai","レク＝サイ"],
+    ["Rell","レル"],["Renata","レナータ・グラスク"],["Renekton","レネクトン"],["Rengar","レンガー"],
+    ["Riven","リヴェン"],["Rumble","ランブル"],["Ryze","ライズ"],["Samira","サミーラ"],
+    ["Sejuani","セジュアニ"],["Senna","セナ"],["Seraphine","セラフィーン"],["Sett","セト"],
+    ["Shaco","シャコ"],["Shen","シェン"],["Shyvana","シヴァーナ"],["Singed","シンジド"],
+    ["Sion","サイオン"],["Sivir","シヴィア"],["Skarner","スカーナー"],["Smolder","スモルダー"],
+    ["Sona","ソナ"],["Soraka","ソラカ"],["Swain","スウェイン"],["Sylas","サイラス"],
+    ["Syndra","シンドラ"],["TahmKench","タム・ケンチ"],["Taliyah","タリヤ"],["Talon","タロン"],
+    ["Taric","タリック"],["Teemo","ティーモ"],["Thresh","スレッシュ"],["Tristana","トリスターナ"],
+    ["Trundle","トランドル"],["Tryndamere","トリンダメア"],["TwistedFate","ツイステッド・フェイト"],["Twitch","トゥイッチ"],
+    ["Udyr","ウディア"],["Urgot","アーゴット"],["Varus","ヴァルス"],["Vayne","ヴェイン"],
+    ["Veigar","ベイガー"],["Velkoz","ヴェル＝コズ"],["Vex","ヴェックス"],["Vi","ヴァイ"],
+    ["Viego","ヴィエゴ"],["Viktor","ビクター"],["Vladimir","ブラッドミア"],["Volibear","ボリベア"],
+    ["Warwick","ワーウィック"],["Xayah","ザヤ"],["Xerath","ゼラス"],["XinZhao","シン・ジャオ"],
+    ["Yasuo","ヤスオ"],["Yone","ヨネ"],["Yorick","ヨリック"],["Yunara","ユナラ"],
+    ["Yuumi","ユーミ"],["Zaahen","ザーヘン"],["Zac","ザック"],["Zed","ゼド"],
+    ["Zeri","ゼリ"],["Ziggs","ジグス"],["Zilean","ジリアン"],["Zoe","ゾーイ"],
+    ["Zyra","ザイラ"]
+  ];
+
+  function loadChampionData(){
+    champList = CHAMPION_LIST.map(([id,name]) => ({id, name})).sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+    champById = {};
+    champList.forEach(c => champById[c.id] = c);
+
+    // 最新パッチバージョンをRiot公式APIから取得（失敗時はフォールバック値を使用）
+    ddVersion = DEFAULT_VERSION_FALLBACK;
+    return fetch('https://ddragon.leagueoflegends.com/api/versions.json')
+      .then(res => res.json())
+      .then(versions => {
+        if(Array.isArray(versions) && versions.length){
+          ddVersion = versions[0];
+        }
+      })
+      .catch(() => { /* ネットワークエラー時はフォールバックのまま続行 */ });
+  }
+
+  function champIconUrl(id){
+    // Riot公式 Data Dragon（認証不要・静的CDN）からチャンピオンアイコンを取得
+    return `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${id}.png`;
+  }
+
+  // ---------- rendering ----------
+  function render(){
+    const filter = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+    const filteredTeams = filter
+      ? teams.filter(t =>
+          t.name.toLowerCase().includes(filter) ||
+          t.players.some(p => p.name.toLowerCase().includes(filter) || p.champions.some(c => c && c.name.toLowerCase().includes(filter)))
+        )
+      : teams;
+
+    const totalPlayers = teams.reduce((sum,t)=> sum + t.players.filter(p=>p.name.trim()).length, 0);
+
+    app.innerHTML = `
+      <p class="eyebrow">LOL &middot; MULTI-TEAM TRACKER</p>
+      <h1>Scouting Board</h1>
+      <p class="sub">op.ggの10件制限を超えて、チーム単位でロスターを一覧管理します。変更はリアルタイムで全員に共有されます。</p>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="searchInput" type="text" placeholder="チーム名・選手名・チャンピオンで検索" value="${escapeAttr(filter)}">
+        </div>
+        <span class="count-pill"><b>${teams.length}</b> チーム / <b>${totalPlayers}</b> 選手登録中</span>
+        <button class="btn btn-primary" id="addTeamBtn">+ チームを追加</button>
+      </div>
+
+      ${filteredTeams.length === 0 ? renderEmpty(filter) : `<div class="grid">${filteredTeams.map(renderTeamCard).join('')}</div>`}
+    `;
+
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('addTeamBtn').addEventListener('click', addTeam);
+    document.getElementById('searchInput').focus({preventScroll:true});
+    // restore cursor position after re-render (best-effort not critical for search box)
+
+    bindCardEvents();
+  }
+
+  function renderEmpty(filter){
+    if(filter){
+      return `<div class="empty"><p>「${escapeHtml(filter)}」に一致するチーム・選手は見つかりませんでした</p></div>`;
+    }
+    return `
+      <div class="empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <p>まだチームが登録されていません。最初のチームを追加しましょう。</p>
+        <button class="btn btn-primary" id="emptyAddBtn">+ チームを追加</button>
+      </div>`;
+  }
+
+  function renderTeamCard(team){
+    return `
+      <div class="card" data-team="${team.id}">
+        <div class="card-head">
+          <input class="team-name-input" data-role="team-name" data-team="${team.id}" placeholder="チーム名を入力" value="${escapeAttr(team.name)}">
+          <button class="icon-btn" data-role="delete-team-x" data-team="${team.id}" title="チームを削除">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="roster">
+          ${team.players.map((p,i)=>renderPlayerRow(team.id,p,i,team.players.length)).join('')}
+        </div>
+        ${renderTeamBPBlock(team)}
+        <div class="team-note-block">
+          <p class="note-label">チームメモ</p>
+          <textarea class="note-input" data-role="team-note" data-team="${team.id}" placeholder="このチームについてのメモ...">${escapeHtml(team.note)}</textarea>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTeamBPBlock(team){
+    const setsHtml = team.bpSets.map((set, setIdx)=>{
+      const banSlots = set.bans.map((champ, slotIdx) => renderBpBadge(team.id, champ, setIdx, slotIdx, 'ban')).join('');
+      const pickSlots = set.picks.map((champ, slotIdx) => renderBpBadge(team.id, champ, setIdx, slotIdx, 'pick')).join('');
+      return `
+        <div class="bp-set">
+          <p class="bp-set-label">GAME ${setIdx + 1}</p>
+          <div class="bp-row">
+            <span class="bp-tag ban">BAN</span>
+            <div class="bp-slots">${banSlots}</div>
+          </div>
+          <div class="bp-row">
+            <span class="bp-tag pick">PICK</span>
+            <div class="bp-slots">${pickSlots}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    return `<div class="bp-block">${setsHtml}</div>`;
+  }
+
+  function renderBpBadge(teamId, champ, setIdx, slotIdx, kind){
+    const inner = champ
+      ? `<img src="${champIconUrl(champ.id)}" alt="${escapeAttr(champ.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;font-size:8px;color:var(--gold);width:100%;height:100%;align-items:center;justify-content:center;">${escapeHtml(champ.name.slice(0,2))}</span>`
+      : `<span class="plus">+</span>`;
+    const title = champ ? escapeAttr(champ.name) : `${kind === 'ban' ? 'Ban' : 'Pick'}チャンピオンを追加`;
+    return `<div class="bp-badge ${kind}" data-role="open-bp-picker" data-team="${teamId}" data-set="${setIdx}" data-kind="${kind}" data-slot="${slotIdx}" title="${title}">${inner}</div>`;
+  }
+
+  function renderPlayerRow(teamId, player, idx, playerCount){
+    const hasUrl = !!player.opgg.trim();
+    const slots = player.champions.map((champ, slotIdx) => {
+      const inner = champ
+        ? `<img src="${champIconUrl(champ.id)}" alt="${escapeAttr(champ.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;font-size:10px;color:var(--gold);width:100%;height:100%;align-items:center;justify-content:center;">${escapeHtml(champ.name.slice(0,2))}</span>`
+        : `<span class="plus">+</span>`;
+      const title = champ ? escapeAttr(champ.name) : 'チャンピオンを追加';
+      return `<div class="champ-badge" data-role="open-picker" data-team="${teamId}" data-idx="${idx}" data-slot="${slotIdx}" title="${title}">${inner}</div>`;
+    }).join('');
+    const canMoveUp = idx > 0;
+    const canMoveDown = idx < playerCount - 1;
+    return `
+      <div class="player-row">
+        <div class="player-row-top">
+          <div class="reorder-btns">
+            <button class="reorder-btn" data-role="move-up" data-team="${teamId}" data-idx="${idx}" title="上に移動" ${canMoveUp?'':'disabled'}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m18 15-6-6-6 6"/></svg>
+            </button>
+            <button class="reorder-btn" data-role="move-down" data-team="${teamId}" data-idx="${idx}" title="下に移動" ${canMoveDown?'':'disabled'}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+          <span class="row-num">0${idx+1}</span>
+          <div class="player-fields">
+            <input class="player-name-input" data-role="player-name" data-team="${teamId}" data-idx="${idx}" placeholder="選手名" value="${escapeAttr(player.name)}">
+            <div class="sub-row ${hasUrl?'has-url':''}">
+              <input class="opgg-input" data-role="player-opgg" data-team="${teamId}" data-idx="${idx}" placeholder="op.gg URLを貼り付け" value="${escapeAttr(player.opgg)}">
+              <a class="opgg-link" href="${hasUrl?escapeAttr(player.opgg):'#'}" target="_blank" rel="noopener" title="op.ggを開く">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="champ-strip">${slots}</div>
+        <div class="player-bp">
+          <input class="bp-history-input" data-role="player-bp" data-team="${teamId}" data-idx="${idx}" placeholder="Ban/Pick履歴のメモ（例：Zed Banされがち、Azir得意）" value="${escapeAttr(player.bpHistory)}">
+        </div>
+        <div class="player-note">
+          <textarea class="note-input" data-role="player-note" data-team="${teamId}" data-idx="${idx}" placeholder="選手メモ...">${escapeHtml(player.note)}</textarea>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  function bindCardEvents(){
+    document.getElementById('emptyAddBtn')?.addEventListener('click', addTeam);
+
+    document.querySelectorAll('[data-role="team-name"]').forEach(el=>{
+      el.addEventListener('input', e=>{
+        const team = teams.find(t=>t.id===e.target.dataset.team);
+        if(team){ team.name = e.target.value; scheduleSave(); }
+      });
+    });
+    document.querySelectorAll('[data-role="delete-team-x"]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        const id = e.currentTarget.dataset.team;
+        const team = teams.find(t=>t.id===id);
+        if(!team) return;
+        if(confirm(`「${team.name || '無題のチーム'}」を削除しますか？`)){
+          teams = teams.filter(t=>t.id!==id);
+          scheduleSave();
+          render();
+        }
+      });
+    });
+    document.querySelectorAll('[data-role="player-name"]').forEach(el=>{
+      el.addEventListener('input', e=>{
+        const team = teams.find(t=>t.id===e.target.dataset.team);
+        if(team){ team.players[+e.target.dataset.idx].name = e.target.value; scheduleSave(); }
+      });
+    });
+    document.querySelectorAll('[data-role="player-opgg"]').forEach(el=>{
+      el.addEventListener('input', e=>{
+        const team = teams.find(t=>t.id===e.target.dataset.team);
+        if(team){
+          team.players[+e.target.dataset.idx].opgg = e.target.value;
+          scheduleSave();
+          const sub = e.target.closest('.sub-row');
+          const link = sub.querySelector('.opgg-link');
+          if(e.target.value.trim()){
+            sub.classList.add('has-url');
+            link.href = e.target.value.trim();
+          } else {
+            sub.classList.remove('has-url');
+          }
+        }
+      });
+    });
+    document.querySelectorAll('[data-role="open-picker"]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        activePickerTarget = { teamId: e.currentTarget.dataset.team, idx: +e.currentTarget.dataset.idx, slot: +e.currentTarget.dataset.slot };
+        openPickerModal();
+      });
+    });
+
+    // --- 選手の並び替え ---
+    document.querySelectorAll('[data-role="move-up"]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        movePlayer(e.currentTarget.dataset.team, +e.currentTarget.dataset.idx, -1);
+      });
+    });
+    document.querySelectorAll('[data-role="move-down"]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        movePlayer(e.currentTarget.dataset.team, +e.currentTarget.dataset.idx, 1);
+      });
+    });
+
+    // --- チームメモ ---
+    document.querySelectorAll('[data-role="team-note"]').forEach(el=>{
+      el.addEventListener('input', e=>{
+        const team = teams.find(t=>t.id===e.target.dataset.team);
+        if(team){ team.note = e.target.value; scheduleSave(); }
+      });
+    });
+
+    // --- 選手メモ ---
+    document.querySelectorAll('[data-role="player-note"]').forEach(el=>{
+      el.addEventListener('input', e=>{
+        const team = teams.find(t=>t.id===e.target.dataset.team);
+        if(team){ team.players[+e.target.dataset.idx].note = e.target.value; scheduleSave(); }
+      });
+    });
+
+    // --- 選手のBan/Pick履歴メモ ---
+    document.querySelectorAll('[data-role="player-bp"]').forEach(el=>{
+      el.addEventListener('input', e=>{
+        const team = teams.find(t=>t.id===e.target.dataset.team);
+        if(team){ team.players[+e.target.dataset.idx].bpHistory = e.target.value; scheduleSave(); }
+      });
+    });
+
+    // --- チームのBan/Pickピッカー ---
+    document.querySelectorAll('[data-role="open-bp-picker"]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        activeBpTarget = { teamId: e.currentTarget.dataset.team, setIdx: +e.currentTarget.dataset.set, kind: e.currentTarget.dataset.kind, slot: +e.currentTarget.dataset.slot };
+        openPickerModal(true);
+      });
+    });
+  }
+
+  // 選手を1つ上/下に移動する（direction: -1で上へ、+1で下へ）
+  function movePlayer(teamId, idx, direction){
+    const team = teams.find(t=>t.id===teamId);
+    if(!team) return;
+    const newIdx = idx + direction;
+    if(newIdx < 0 || newIdx >= team.players.length) return;
+    const tmp = team.players[idx];
+    team.players[idx] = team.players[newIdx];
+    team.players[newIdx] = tmp;
+    scheduleSave();
+    render();
+  }
+
+  function addTeam(){
+    teams.push(makeEmptyTeam(`チーム ${teams.length+1}`));
+    scheduleSave();
+    render();
+    // scroll to bottom card
+    setTimeout(()=>{
+      const cards = document.querySelectorAll('.card');
+      cards[cards.length-1]?.scrollIntoView({behavior:'smooth', block:'center'});
+      cards[cards.length-1]?.querySelector('[data-role="team-name"]')?.focus();
+    }, 30);
+  }
+
+  // ---------- champion picker modal ----------
+  function openPickerModal(isBpMode){
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'pickerOverlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal-head">
+          <input id="champSearch" type="text" placeholder="チャンピオン名で検索...">
+          <button class="modal-close" id="closePickerBtn">&times;</button>
+        </div>
+        <div class="champ-grid" id="champGrid"></div>
+        <button class="clear-option" id="clearChampBtn">選択を解除する</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    renderChampGrid('', isBpMode);
+    const searchInput = document.getElementById('champSearch');
+    searchInput.addEventListener('input', ()=>renderChampGrid(searchInput.value.trim().toLowerCase(), isBpMode));
+    searchInput.focus();
+
+    document.getElementById('closePickerBtn').addEventListener('click', closePickerModal);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) closePickerModal(); });
+    document.getElementById('clearChampBtn').addEventListener('click', ()=>{
+      if(isBpMode) applyBpChoice(null); else applyChampionChoice(null);
+      closePickerModal();
+    });
+    document.addEventListener('keydown', escListener);
+  }
+  function escListener(e){ if(e.key==='Escape') closePickerModal(); }
+  function closePickerModal(){
+    document.getElementById('pickerOverlay')?.remove();
+    document.removeEventListener('keydown', escListener);
+    activePickerTarget = null;
+    activeBpTarget = null;
+  }
+  function renderChampGrid(query, isBpMode){
+    const grid = document.getElementById('champGrid');
+    if(!grid) return;
+    const list = query ? champList.filter(c=>c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query)) : champList;
+    if(list.length === 0){
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:20px;">見つかりませんでした</div>`;
+      return;
+    }
+    grid.innerHTML = list.map(c => `
+      <div class="champ-option" data-id="${c.id}" data-name="${escapeAttr(c.name)}">
+        <img src="${champIconUrl(c.id)}" alt="${escapeAttr(c.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div style="display:none;width:32px;height:32px;border-radius:5px;background:var(--bg-input);border:1px solid var(--border);align-items:center;justify-content:center;font-size:10px;color:var(--gold);">${escapeHtml(c.name.slice(0,2))}</div>
+        <span>${escapeHtml(c.name)}</span>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.champ-option').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const choice = {id: el.dataset.id, name: el.dataset.name};
+        if(isBpMode) applyBpChoice(choice); else applyChampionChoice(choice);
+        closePickerModal();
+      });
+    });
+  }
+  function applyChampionChoice(choice){
+    if(!activePickerTarget) return;
+    const team = teams.find(t=>t.id===activePickerTarget.teamId);
+    if(!team) return;
+    const player = team.players[activePickerTarget.idx];
+    const slot = activePickerTarget.slot || 0;
+    if(choice){
+      player.champions[slot] = { id: choice.id, name: choice.name };
+    } else {
+      player.champions[slot] = null;
+    }
+    scheduleSave();
+    render();
+  }
+
+  function applyBpChoice(choice){
+    if(!activeBpTarget) return;
+    const team = teams.find(t=>t.id===activeBpTarget.teamId);
+    if(!team) return;
+    const set = team.bpSets[activeBpTarget.setIdx];
+    if(!set) return;
+    const target = activeBpTarget.kind === 'ban' ? set.bans : set.picks;
+    const slot = activeBpTarget.slot || 0;
+    target[slot] = choice ? { id: choice.id, name: choice.name } : null;
+    scheduleSave();
+    render();
+  }
+
+  // ---------- init ----------
+  function makeSampleTeams(){
+    const t = makeEmptyTeam('サンプルチーム');
+    const picks = [
+      ['Faker','Zed'], ['Chovy','Azir'], ['Ruler','Jinx'],
+      ['Keria','Rakan'], ['Peanut','LeeSin']
+    ];
+    picks.forEach(([name, champId], i)=>{
+      t.players[i].name = name;
+      t.players[i].champions[0] = { id: champId, name: champId };
+    });
+    return [t];
+  }
+
+  async function waitForFirebase(timeoutMs){
+    const start = Date.now();
+    while(!window.__firebaseTeamsRef){
+      if(Date.now() - start > timeoutMs) return false;
+      await new Promise(r=>setTimeout(r, 50));
+    }
+    return true;
+  }
+
+  async function init(){
+    await Promise.all([ waitForFirebase(3000), loadChampionData() ]);
+
+    if(window.__firebaseTeamsRef){
+      const savedTeams = await loadTeamsOnce();
+      teams = savedTeams.length ? savedTeams : makeSampleTeams();
+      render();
+      if(!savedTeams.length){ scheduleSave(); } // 初回はサンプルデータをFirebaseにも書き込む
+      subscribeRealtime(); // これ以降はFirebaseの変更を即座に反映
+    } else {
+      showToast('Firebaseに接続できませんでした。オフラインモードで表示します');
+      teams = makeSampleTeams();
+      render();
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
